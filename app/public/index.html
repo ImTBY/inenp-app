@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>TODO-Liste</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+  <div class="w-full max-w-5xl space-y-6">
+
+    <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
+      <h1 class="text-2xl font-semibold text-center text-gray-900">📝 Todo-Liste</h1>
+      <div class="flex gap-2">
+        <input id="newTodo" placeholder="Neues Todo…" autofocus
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <button onclick="addTodo()"
+                class="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition">
+          Hinzufügen
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-[500px]">
+      
+      <div class="bg-white rounded-2xl shadow p-4 flex flex-col min-h-0">
+        <h2 class="text-lg font-medium text-gray-800 mb-2 flex items-center gap-1">
+          <span>📌</span> <span>Offen</span>
+        </h2>
+        <ul id="activeList" class="flex-1 overflow-y-auto pr-2 space-y-2"></ul>
+      </div>
+
+      <div class="bg-gray-50 rounded-2xl shadow-inner p-4 flex flex-col min-h-0">
+        <h2 class="text-lg font-medium text-gray-600 mb-2 flex items-center gap-1">
+          <span>✅</span> <span>Erledigt</span>
+        </h2>
+        <ul id="doneList" class="flex-1 overflow-y-auto pr-2 space-y-2"></ul>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    async function fetchTodos() {
+      const res = await fetch('/api/todos');
+      const todos = await res.json();
+
+      const colors = [
+        'bg-red-100', 'bg-orange-100', 'bg-yellow-100',
+        'bg-green-100', 'bg-teal-100', 'bg-blue-100',
+        'bg-indigo-100', 'bg-purple-100', 'bg-pink-100'
+      ];
+      const randomColor = () => colors[Math.floor(Math.random() * colors.length)];
+
+      const activeList = document.getElementById('activeList');
+      const doneList = document.getElementById('doneList');
+      activeList.innerHTML = '';
+      doneList.innerHTML = '';
+
+      todos.forEach(t => {
+        const li = document.createElement('li');
+        const bgColor = randomColor();
+
+        li.className = `flex items-center justify-between px-4 py-2 ${bgColor} border border-gray-300 rounded-full shadow-sm`;
+
+        const left = document.createElement('div');
+        left.className = 'flex items-center gap-3';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = t.done;
+        checkbox.className = 'form-checkbox h-5 w-5 text-blue-600';
+        checkbox.onclick = async (e) => {
+          e.stopPropagation();
+          await toggleDone(t.id, checkbox.checked);
+        };
+
+        const span = document.createElement('span');
+        span.textContent = t.text;
+        span.className = t.done ? 'text-gray-400 line-through' : 'text-gray-800';
+
+        left.appendChild(checkbox);
+        left.appendChild(span);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '✖';
+        removeBtn.className = 'text-gray-500 hover:text-red-600 font-bold text-xl px-2';
+        removeBtn.onclick = async (e) => {
+          e.stopPropagation();
+          await deleteTodo(t.id);
+        };
+
+        li.appendChild(left);
+        li.appendChild(removeBtn);
+
+        if (t.done) {
+          doneList.appendChild(li);
+        } else {
+          activeList.appendChild(li);
+        }
+      });
+    }
+
+    async function addTodo() {
+      const input = document.getElementById('newTodo');
+      if (!input.value) return;
+      await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: input.value })
+      });
+      input.value = '';
+      fetchTodos();
+    }
+
+    async function toggleDone(id, done) {
+      await fetch(`/api/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done })
+      });
+      fetchTodos();
+    }
+
+    async function deleteTodo(id) {
+      await fetch(`/api/todos/${id}`, {
+        method: 'DELETE'
+      });
+      fetchTodos();
+    }
+
+    fetchTodos();
+  </script>
+</body>
+</html>

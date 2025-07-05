@@ -1,0 +1,15 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/oniscript/inenp-todo-demo
+  pullPolicy: IfNotPresent
+  tag: "1.0.0"
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: []
