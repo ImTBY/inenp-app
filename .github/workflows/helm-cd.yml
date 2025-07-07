@@ -7,9 +7,6 @@ permissions:
   contents: read
   id-token: write
 
-env:
-  TF_VAR_azure_region: ${{ secrets.AZURE_REGION }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,8 +18,8 @@ jobs:
       - name: Azure Login via OIDC
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup kubectl
@@ -38,41 +35,16 @@ jobs:
       - name: Get AKS credentials
         run: |
           az aks get-credentials \
-            --resource-group rg-inenp-${{ secrets.ENVIRONMENT || 'dev' }} \
+            --resource-group ${{ secrets.TF_STATE_RESOURCE_GROUP }} \
             --name aks-inenp-cluster \
             --overwrite-existing
-
-      - name: Retrieve secrets from Azure Key Vault
-        run: |
-          # Get database connection string
-          DB_CONNECTION_STRING=$(az keyvault secret show \
-            --vault-name kv-inenp-${{ secrets.KV_SUFFIX }} \
-            --name db-connection-string \
-            --query value -o tsv)
-          
-          # Get OAuth2 client credentials
-          OAUTH2_CLIENT_ID=$(az keyvault secret show \
-            --vault-name kv-inenp-${{ secrets.KV_SUFFIX }} \
-            --name oauth2-client-id \
-            --query value -o tsv)
-          
-          OAUTH2_CLIENT_SECRET=$(az keyvault secret show \
-            --vault-name kv-inenp-${{ secrets.KV_SUFFIX }} \
-            --name oauth2-client-secret \
-            --query value -o tsv)
-          
-          # Export as environment variables for Helm
-          echo "DB_CONNECTION_STRING=$DB_CONNECTION_STRING" >> $GITHUB_ENV
-          echo "OAUTH2_CLIENT_ID=$OAUTH2_CLIENT_ID" >> $GITHUB_ENV
-          echo "OAUTH2_CLIENT_SECRET=$OAUTH2_CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Deploy Service A with Helm
         run: |
           helm upgrade --install service-a ./charts/service-a \
             --namespace app \
             --create-namespace \
-            --set image.tag=${{ github.sha }} \
-            --set database.connectionString="${{ env.DB_CONNECTION_STRING }}"
+            --set image.tag=${{ github.sha }}
 
       - name: Deploy Service B with Helm
         run: |
@@ -80,9 +52,6 @@ jobs:
             --namespace app \
             --create-namespace \
             --set image.tag=${{ github.sha }} \
-            --set database.connectionString="${{ env.DB_CONNECTION_STRING }}" \
-            --set oauth2.clientId="${{ env.OAUTH2_CLIENT_ID }}" \
-            --set oauth2.clientSecret="${{ env.OAUTH2_CLIENT_SECRET }}" \
             --set ingress.enabled=true \
             --set ingress.className="azure-application-gateway"
 
@@ -91,10 +60,7 @@ jobs:
           helm upgrade --install database ./charts/database \
             --namespace app \
             --create-namespace \
-            --set postgresql.enabled=false \
-            --set externalDatabase.host="${{ secrets.DB_HOST }}" \
-            --set externalDatabase.database="inenp_db" \
-            --set externalDatabase.username="${{ secrets.DB_ADMIN_USERNAME }}"
+            --set postgresql.enabled=false
 
       - name: Wait for deployments
         run: |
@@ -103,6 +69,4 @@ jobs:
 
       - name: Verify deployment
         run: |
-          kubectl get pods -n app
-          kubectl get services -n app
-          kubectl get ingress -n app
+          kubectl get pods,svc,ingress -n app
