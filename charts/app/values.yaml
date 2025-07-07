@@ -1,9 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/oniscript/inenp-todo-demo
-  pullPolicy: IfNotPresent
+  repository: ghcr.io/imtby/inenp-todo-demo
   tag: "1.0.0"
+  pullPolicy: IfNotPresent
 
 service:
   type: ClusterIP
