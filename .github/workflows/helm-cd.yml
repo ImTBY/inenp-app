@@ -51,14 +51,14 @@ jobs:
             --create-namespace \
             --set image.tag=${{ github.sha }}
 
-      - name: Deploy Service B with Helm
-        run: |
-          helm upgrade --install service-b ./charts/service-b \
-            --namespace app \
-            --create-namespace \
-            --set image.tag=${{ github.sha }} \
-            --set ingress.enabled=true \
-            --set ingress.className="azure-application-gateway"
+#      - name: Deploy Service B with Helm
+#        run: |
+#          helm upgrade --install service-b ./charts/service-b \
+#            --namespace app \
+#            --create-namespace \
+#            --set image.tag=${{ github.sha }} \
+#            --set ingress.enabled=true \
+#            --set ingress.className="azure-application-gateway"
 
       - name: Deploy Database with Helm
         run: |
