@@ -69,7 +69,9 @@ jobs:
 
       - name: Wait for deployments
         run: |
-          kubectl wait --for=condition=available --timeout=300s deployment/app -n app
+          for dep in $(kubectl get deploy -n app -o jsonpath='{.items[*].metadata.name}'); do
+            kubectl wait --for=condition=available --timeout=300s deployment/$dep -n app
+          done
 
       - name: Verify deployment
         run: |
