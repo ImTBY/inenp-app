@@ -69,8 +69,6 @@ jobs:
 
       - name: Wait for deployments
         run: |
-#          kubectl wait --for=condition=available --timeout=300s deployment/service-a -n app
-#          kubectl wait --for=condition=available --timeout=300s deployment/service-b -n app
           kubectl wait --for=condition=available --timeout=300s deployment/app -n app
 
       - name: Verify deployment
