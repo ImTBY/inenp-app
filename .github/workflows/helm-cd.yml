@@ -35,7 +35,7 @@ jobs:
       - name: Get AKS credentials
         run: |
           az aks get-credentials \
-            --resource-group ${{ secrets.TF_STATE_RESOURCE_GROUP }} \
+            --resource-group gott-schuetze-uns \
             --name aks-inenp-cluster \
             --overwrite-existing
 
