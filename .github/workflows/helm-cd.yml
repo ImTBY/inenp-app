@@ -46,7 +46,7 @@ jobs:
 
       - name: Deploy Service A with Helm
         run: |
-          helm upgrade --install service-a ./charts/service-a \
+          helm upgrade --install service-a ./charts/app \
             --namespace app \
             --create-namespace \
             --set image.tag=${{ github.sha }}
