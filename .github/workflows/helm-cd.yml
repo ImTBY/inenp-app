@@ -32,12 +32,17 @@ jobs:
         with:
           version: 'latest'
 
+      - name: Install kubelogin
+        run: |
+          az aks install-cli
+
       - name: Get AKS credentials
         run: |
           az aks get-credentials \
             --resource-group gott-schuetze-uns \
             --name aks-inenp-cluster \
-            --overwrite-existing
+            --overwrite-existing \
+            --admin
 
       - name: Deploy Service A with Helm
         run: |
