@@ -60,12 +60,12 @@ jobs:
 #            --set ingress.enabled=true \
 #            --set ingress.className="azure-application-gateway"
 
-      - name: Deploy Database with Helm
-        run: |
-          helm upgrade --install database ./charts/database \
-            --namespace app \
-            --create-namespace \
-            --set postgresql.enabled=false
+#      - name: Deploy Database with Helm
+#        run: |
+#         helm upgrade --install database ./charts/database \
+#           --namespace app \
+#            --create-namespace \
+#            --set postgresql.enabled=false
 
       - name: Wait for deployments
         run: |
