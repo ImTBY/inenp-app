@@ -1,0 +1,35 @@
+# Dependency directories
+node_modules/
+vendor/
+
+# Build output
+dist/
+build/
+
+# Log files
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+
+# IDE/project files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Python
+*.pyc
+__pycache__/
+
+# Compiled files
+*.o
+*.class
+
+# MacOS and Windows system files
+ehthumbs.db
+Icon?

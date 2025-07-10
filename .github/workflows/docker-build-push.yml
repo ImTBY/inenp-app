@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'app/**'
+      - '../../app_one/app/**'
       - 'Dockerfile'
 
 permissions:

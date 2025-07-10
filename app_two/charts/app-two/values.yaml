@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: app-two
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+env:
+  DB_HOST: "postgres"
+  DB_NAME: "testdb"
+  DB_USER: "postgres"
+  DB_PASSWORD: "password"
+  DB_PORT: "5432"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
