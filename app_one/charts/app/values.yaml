@@ -30,6 +30,10 @@ autoscaling:
   maxReplicas: 3
   targetCPUUtilizationPercentage: 80
 
+# Environment variables
+env:
+  APP_TWO_URL: "http://app-two:80"
+
 resources: {}
 nodeSelector: {}
 tolerations: []
