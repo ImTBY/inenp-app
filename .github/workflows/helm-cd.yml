@@ -1,7 +1,9 @@
-name: Helm CD
+name: Helm CD - Three-Tier Deployment
 
 on:
   push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -44,33 +46,51 @@ jobs:
             --overwrite-existing \
             --admin
 
-      - name: Deploy Service A with Helm
+      - name: Deploy PostgreSQL Database with Helm
         run: |
-          helm upgrade --install service-a ./charts/app \
+          helm upgrade --install postgres ./database/charts/postgres \
             --namespace app \
             --create-namespace \
-            --set image.tag=${{ github.sha }}
+            --wait \
+            --timeout 300s
 
-#      - name: Deploy Service B with Helm
-#        run: |
-#          helm upgrade --install service-b ./charts/service-b \
-#            --namespace app \
-#            --create-namespace \
-#            --set image.tag=${{ github.sha }} \
-#            --set ingress.enabled=true \
-#            --set ingress.className="azure-application-gateway"
-
-#      - name: Deploy Database with Helm
-#        run: |
-#         helm upgrade --install database ./charts/database \
-#           --namespace app \
-#            --create-namespace \
-#            --set postgresql.enabled=false
-
-      - name: Wait for deployments
+      - name: Deploy app_two (FastAPI Backend) with Helm
         run: |
-          kubectl wait --for=condition=available --timeout=300s deployment/service-a -n app
+          helm upgrade --install app-two ./app_two/charts/app-two \
+            --namespace app \
+            --set image.tag=${{ github.sha }} \
+            --wait \
+            --timeout 300s
 
-      - name: Verify deployment
+      - name: Deploy app_one (Express Frontend) with Helm
         run: |
-          kubectl get pods,svc,ingress -n app
+          helm upgrade --install app-one ./app_one/charts/app \
+            --namespace app \
+            --set image.tag=${{ github.sha }} \
+            --wait \
+            --timeout 300s
+
+      - name: Wait for all deployments
+        run: |
+          kubectl wait --for=condition=available --timeout=300s deployment/postgres -n app
+          kubectl wait --for=condition=available --timeout=300s deployment/app-two -n app
+          kubectl wait --for=condition=available --timeout=300s deployment/app-one -n app
+
+      - name: Verify three-tier deployment
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods -n app
+          echo "=== Services ==="
+          kubectl get svc -n app
+          echo "=== Deployments ==="
+          kubectl get deployments -n app
+          echo "=== PVCs ==="
+          kubectl get pvc -n app
+
+      - name: Test connectivity
+        run: |
+          echo "Testing app_one -> app_two connectivity..."
+          kubectl exec deployment/app-one -n app -- curl -f http://app-two:80/ || echo "Connection test failed"
+          
+          echo "Testing database connectivity..."
+          kubectl exec deployment/postgres -n app -- pg_isready -U postgres || echo "Database test failed"

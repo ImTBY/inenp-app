@@ -1,21 +1,24 @@
-name: Build & Push Docker Image
+name: Build & Push Docker Images
 
 on:
   push:
     branches:
       - main
     paths:
-      - '../../app_one/app/**'
-      - 'Dockerfile'
+      - 'app_one/app/**'
+      - 'app_two/app/**'
+      - 'app_one/Dockerfile'
+      - 'app_two/Dockerfile'
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  build-and-push:
+  build-app-one:
     runs-on: ubuntu-latest
-
+    if: contains(github.event.head_commit.modified, 'app_one/')
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,10 +33,40 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push app_one Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./app
-          file: ./app/Dockerfile
+          context: ./app_one
+          file: ./app_one/Dockerfile
           push: true
-          tags: ghcr.io/imtby/inenp-todo-demo:${{ github.sha }}
+          tags: |
+            ghcr.io/imtby/inenp-todo-demo:${{ github.sha }}
+            ghcr.io/imtby/inenp-todo-demo:latest
+
+  build-app-two:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'app_two/')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push app_two Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app_two
+          file: ./app_two/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/imtby/app-two:${{ github.sha }}
+            ghcr.io/imtby/app-two:latest
