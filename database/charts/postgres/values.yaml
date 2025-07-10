@@ -1,0 +1,56 @@
+replicaCount: 1
+
+image:
+  repository: postgres
+  pullPolicy: IfNotPresent
+  tag: "15"
+
+# PostgreSQL configuration
+postgres:
+  database: testdb
+  username: postgres
+  password: password
+
+service:
+  type: ClusterIP
+  port: 5432
+
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 10Gi
+  accessMode: ReadWriteOnce
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Environment variables
+env:
+  POSTGRES_DB: testdb
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: password
+  PGDATA: /var/lib/postgresql/data/pgdata
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 999
+
+# Security context
+securityContext:
+  runAsUser: 999
+  runAsGroup: 999
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
