@@ -1,96 +1,96 @@
-name: Helm CD - Three-Tier Deployment
+# name: Helm CD - Three-Tier Deployment
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-permissions:
-  contents: read
-  id-token: write
+# permissions:
+#   contents: read
+#   id-token: write
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
 
-      - name: Azure Login via OIDC
-        uses: azure/login@v1
-        with:
-          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+#       - name: Azure Login via OIDC
+#         uses: azure/login@v1
+#         with:
+#           client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+#           tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+#           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
+#       - name: Setup kubectl
+#         uses: azure/setup-kubectl@v3
+#         with:
+#           version: 'latest'
 
-      - name: Setup Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
+#       - name: Setup Helm
+#         uses: azure/setup-helm@v3
+#         with:
+#           version: 'latest'
 
-      - name: Install kubelogin
-        run: |
-          az aks install-cli
+#       - name: Install kubelogin
+#         run: |
+#           az aks install-cli
 
-      - name: Get AKS credentials
-        run: |
-          az aks get-credentials \
-            --resource-group gott-schuetze-uns \
-            --name aks-inenp-cluster \
-            --overwrite-existing \
-            --admin
+#       - name: Get AKS credentials
+#         run: |
+#           az aks get-credentials \
+#             --resource-group gott-schuetze-uns \
+#             --name aks-inenp-cluster \
+#             --overwrite-existing \
+#             --admin
 
-      - name: Deploy PostgreSQL Database with Helm
-        run: |
-          helm upgrade --install postgres ./database/charts/postgres \
-            --namespace app \
-            --create-namespace \
-            --wait \
-            --timeout 300s
+#       - name: Deploy PostgreSQL Database with Helm
+#         run: |
+#           helm upgrade --install postgres ./database/charts/postgres \
+#             --namespace app \
+#             --create-namespace \
+#             --wait \
+#             --timeout 300s
 
-      - name: Deploy app_two (FastAPI Backend) with Helm
-        run: |
-          helm upgrade --install app-two ./app_two/charts/app-two \
-            --namespace app \
-            --set image.tag=${{ github.sha }} \
-            --wait \
-            --timeout 300s
+#       - name: Deploy app_two (FastAPI Backend) with Helm
+#         run: |
+#           helm upgrade --install app-two ./app_two/charts/app-two \
+#             --namespace app \
+#             --set image.tag=${{ github.sha }} \
+#             --wait \
+#             --timeout 300s
 
-      - name: Deploy app_one (Express Frontend) with Helm
-        run: |
-          helm upgrade --install app-one ./app_one/charts/app \
-            --namespace app \
-            --set image.tag=${{ github.sha }} \
-            --wait \
-            --timeout 300s
+#       - name: Deploy app_one (Express Frontend) with Helm
+#         run: |
+#           helm upgrade --install app-one ./app_one/charts/app \
+#             --namespace app \
+#             --set image.tag=${{ github.sha }} \
+#             --wait \
+#             --timeout 300s
 
-      - name: Wait for all deployments
-        run: |
-          kubectl wait --for=condition=available --timeout=300s deployment/postgres -n app
-          kubectl wait --for=condition=available --timeout=300s deployment/app-two -n app
-          kubectl wait --for=condition=available --timeout=300s deployment/app-one -n app
+#       - name: Wait for all deployments
+#         run: |
+#           kubectl wait --for=condition=available --timeout=300s deployment/postgres -n app
+#           kubectl wait --for=condition=available --timeout=300s deployment/app-two -n app
+#           kubectl wait --for=condition=available --timeout=300s deployment/app-one -n app
 
-      - name: Verify three-tier deployment
-        run: |
-          echo "=== Pods ==="
-          kubectl get pods -n app
-          echo "=== Services ==="
-          kubectl get svc -n app
-          echo "=== Deployments ==="
-          kubectl get deployments -n app
-          echo "=== PVCs ==="
-          kubectl get pvc -n app
+#       - name: Verify three-tier deployment
+#         run: |
+#           echo "=== Pods ==="
+#           kubectl get pods -n app
+#           echo "=== Services ==="
+#           kubectl get svc -n app
+#           echo "=== Deployments ==="
+#           kubectl get deployments -n app
+#           echo "=== PVCs ==="
+#           kubectl get pvc -n app
 
-      - name: Test connectivity
-        run: |
-          echo "Testing app_one -> app_two connectivity..."
-          kubectl exec deployment/app-one -n app -- curl -f http://app-two:80/ || echo "Connection test failed"
+#       - name: Test connectivity
+#         run: |
+#           echo "Testing app_one -> app_two connectivity..."
+#           kubectl exec deployment/app-one -n app -- curl -f http://app-two:80/ || echo "Connection test failed"
           
-          echo "Testing database connectivity..."
-          kubectl exec deployment/postgres -n app -- pg_isready -U postgres || echo "Database test failed"
+#           echo "Testing database connectivity..."
+#           kubectl exec deployment/postgres -n app -- pg_isready -U postgres || echo "Database test failed"
